@@ -20,14 +20,16 @@ end
 -- List functions
 -- 
 --
-
 LIST_DELIM = "~"
 
-function _current_list(key, cur)
+function _current_list(key, tokens)
    local old = _get(key)
 
    if old then
-       old = string.gsub(old, cur, "")
+       for i = 1, #tokens do
+            old = string.gsub(old, "^" .. tokens[i] .. LIST_DELIM, "")
+            old = string.gsub(old, LIST_DELIM .. tokens[i] .. LIST_DELIM, LIST_DELIM)
+       end
 
        return _tokenize(old, LIST_DELIM)
     else
@@ -37,31 +39,35 @@ end
 
 
 function list_add(key, value)
-    local current = _current_list(key, value)
+    --- Determine the limit by inspecting if | is in the key
+    local limit = 200
+
+    if string.find(key, '|') then
+        local key_parts = _tokenize(key, '|')
+        limit = tonumber(key_parts[1])
+        key = key_parts[2]
+    end
+
+    --- Fetch the current or create a new list
+    local tokens = _tokenize(value, LIST_DELIM)
+    local current = _current_list(key, tokens)
 
     if current == false then
         current = {}
     end
 
-    local tokens = _tokenize(value, LIST_DELIM)
+    --- Insert the new elements and remove the old if the size is too big
+    local insert_index = 1
     for i = 1, #tokens do
-        table.insert(current, tokens[i])
+        table.insert(current, insert_index, tokens[i])
+        insert_index = insert_index + 1
+        if #current > limit then
+            table.remove(current)
+        end
     end
 
-    -- Filter list and remove too many
-    local index = 1
-    if table.getn(current) > 200 then
-        index = table.getn(current) - 151
-    end
-
-    local result = {}
-    for i = index, #current do
-        table.insert(result, current[i])
-    end
-
-    local str_result = strjoin("~", result)
-    _put(key, str_result)
-
+    local result = table.concat(current, LIST_DELIM)
+    _put(key, result .. LIST_DELIM)
     return "ok"
 end
 
@@ -76,7 +82,7 @@ function list_remove(key, value)
     local tokens = _tokenize(value, LIST_DELIM)
 
     for i = 1, #tokens do
-        current = string.gsub(current, tokens[i] .. "~", "")
+        current = string.gsub(current, tokens[i] .. LIST_DELIM, "")
     end
 
     _put(key, current)
@@ -88,7 +94,6 @@ end
 
 -- Helpers
 --
-
 function _tokenize(text, delims) 
     local tokens = {} 
     for token in string.gmatch(text, "[^" .. delims .. "]+") do 
@@ -98,17 +103,3 @@ function _tokenize(text, delims)
     end 
     return tokens 
 end 
-
-function strjoin(delimiter, list)
-  local len = table.getn(list)
-  if len == 0 then 
-    return "" 
-  end
-
-  local string = list[1]
-  for i = 2, len do 
-    string = string .. delimiter .. list[i] 
-  end
-
-  return string .. delimiter
-end
