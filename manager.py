@@ -250,7 +250,7 @@ def hot_copy():
     open(nodes, 'w').write(simplejson.dumps(config['NODES']))
 
     os.popen('rm -f %s' % backup_file)
-    os.popen('zip -r %s %s' % (backup_file, backup_dir))
+    os.popen('zip -jr %s %s' % (backup_file, backup_dir))
     os.popen('rm -rf %s' % backup_dir)
 
     print 'Created hot copy in %s' % (backup_file)
@@ -268,7 +268,7 @@ def hot_restore(args):
     if not os.path.exists(restore_dir):
         os.mkdir(restore_dir)
 
-    #os.popen('unzip %s -d %s' % (zip_zip, restore_dir))
+    os.popen('unzip %s -d %s' % (zip_zip, restore_dir))
 
     restore_dir = '%s' % (restore_dir)
 
