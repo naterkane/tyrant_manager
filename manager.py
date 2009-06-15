@@ -39,8 +39,9 @@ def help():
     print '   python manager.py -c config.py purge_logs'
     print '   python manager.py -c config.py delete_logs'
     print '   python manager.py -c config.py delete_data'
+    print ''
     print '   python manager.py -c config.py hot_copy'
-    print '   python manager.py -c config.py restore_backups'
+    print '   python manager.py -c config.py hot_restore hot_copy_1245046685.zip'
     print ''
     print 'View a sample config file in config.sample.py.'
 
@@ -226,7 +227,7 @@ def hot_copy():
     #--- Do the backups ----------------------------------------------
     for name in sorted(keys):
         node = node_by_name(name)
-        cmd = "sudo tcrmgr copy -port %s %s '@.%s'" %\
+        cmd = "tcrmgr copy -port %s %s '@.%s'" %\
                  (node['port'], node['host'], ttbackup)
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
@@ -248,9 +249,9 @@ def hot_copy():
     nodes = '%s/backup_dir/nodes.json' % (config['DATA_DIR'])
     open(nodes, 'w').write(simplejson.dumps(config['NODES']))
 
-    os.popen('sudo rm -f %s' % backup_file)
-    os.popen('sudo zip -r %s %s' % (backup_file, backup_dir))
-    os.popen('sudo rm -rf %s' % backup_dir)
+    os.popen('rm -f %s' % backup_file)
+    os.popen('zip -r %s %s' % (backup_file, backup_dir))
+    os.popen('rm -rf %s' % backup_dir)
 
     print 'Created hot copy in %s' % (backup_file)
 
@@ -260,11 +261,16 @@ def hot_restore(args):
     Matches the slave nodes from the config file.
     """
     import simplejson
+    zip_zip = args[1]
 
     #--- Create restore_dir ----------------------------------------------
     restore_dir = '%s/restore_dir' % (config['DATA_DIR'])
     if not os.path.exists(restore_dir):
         os.mkdir(restore_dir)
+
+    #os.popen('unzip %s -d %s' % (zip_zip, restore_dir))
+
+    restore_dir = '%s' % (restore_dir)
 
     #--- Match slave id's and restore rts files ---------------------------
     copy_nodes = simplejson.loads( open('%s/nodes.json' % restore_dir).read() )
