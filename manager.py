@@ -15,10 +15,6 @@ import os
 import shutil
 from os.path import dirname, join, realpath
 
-try:
-    import simplejson
-except:
-    pass
 
 config = {}
 
@@ -216,6 +212,13 @@ def status_node(node):
 def hot_copy():
     """Takes a hot copy of all Tyrant nodes, without shutting them down.
     """
+    import simplejson
+
+    data_dir = '%s/data' % config['DATA_DIR']
+    backup_dir = '%s/backup_dir/' % (config['DATA_DIR'])
+    if not os.path.exists(backup_dir):
+        os.mkdir(backup_dir)
+
     keys = config.get('NODES').keys()
     file_dir = os.path.abspath(os.path.dirname(__file__))
     ttbackup = '%s/ttbackup.sh' % file_dir
@@ -228,8 +231,17 @@ def hot_copy():
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
+    #--- Move data into backup dir ----------------------------------------------
+    for root, dirs, files in os.walk(data_dir):
+        for file in files:
+            try:
+                id, ext, log_pos = file.split('.')
+            except ValueError:
+                continue
+            os.popen('mv %s/%s %s' % (data_dir, file, backup_dir))
+            print 'Moved %s to backup directory' % file
+
     #--- Pack them into a tar file ----------------------------------------------
-    backup_dir = '%s/backup_dir/' % (config['DATA_DIR'])
     stamp = long(time.time())
     backup_file = '%s/hot_copy_%s.zip' % (config['DATA_DIR'], stamp)
 
@@ -247,8 +259,12 @@ def hot_restore(args):
     """Restores `zip_file` in config['DATA_DIR']/restore_dir.
     Matches the slave nodes from the config file.
     """
+    import simplejson
+
     #--- Create restore_dir ----------------------------------------------
     restore_dir = '%s/restore_dir' % (config['DATA_DIR'])
+    if not os.path.exists(restore_dir):
+        os.mkdir(restore_dir)
 
     #--- Match slave id's and restore rts files ---------------------------
     copy_nodes = simplejson.loads( open('%s/nodes.json' % restore_dir).read() )
