@@ -40,15 +40,15 @@ def help():
     print '   python manager.py -c config.py delete_logs'
     print '   python manager.py -c config.py delete_data'
     print ''
-    print '   python manager.py -c config.py hot_copy'
-    print '   python manager.py -c config.py hot_restore hot_copy_1245046685.tar.gz'
+    print '   python manager.py -c config.py backup'
+    print '   python manager.py -c config.py restore lightcloud_copy_1245046685.tar.gz'
     print ''
     print 'View a sample config file in config.sample.py.'
 
     sys.exit(2)
 
 
-def start(args, options):
+def start(args, options=None):
     if 'all' in args:
         for node in nodes():
             start_node(node)
@@ -56,7 +56,7 @@ def start(args, options):
         start_node(node_by_name(args[0]))
 
 
-def stop(args, options):
+def stop(args, options=None):
     if 'all' in args:
         for node in nodes():
             stop_node(node)
@@ -64,7 +64,7 @@ def stop(args, options):
         stop_node(node_by_name(args[0]))
 
 
-def status(args, options):
+def status(args, options=None):
     if 'all' in args:
         for node in nodes():
             status_node(node)
@@ -79,9 +79,12 @@ def nodes():
     return [node_by_name(name) for name in sorted(keys)]
 
 
+_cache = {}
 def node_by_name(name):
     """Returns node entry from config's NODES dictionary.
     Extra values are added such as name, host, m_host and data path"""
+    if name in _cache:
+        return _cache[name]
 
     node = config.get('NODES')[name]
     node['name'] = name
@@ -91,7 +94,12 @@ def node_by_name(name):
 
     node['m_host'], node['m_port'] = node['master'].split(':')
 
+    node['port'] = int(node['port'])
+    node['m_port'] = int(node['m_port'])
+
     node['data'] = config['DATA_DIR']
+
+    _cache[name] = node
     return node
 
 
@@ -211,9 +219,22 @@ def status_node(node):
 
 
 #--- Logs, backups and data ----------------------------------------------
-def hot_copy():
-    """Takes a hot copy of all Tyrant nodes, without shutting them down.
+def backup():
+    """Takes a copy of the data. Your server will be shut down on backups!
+    The reason for this is that when your database gets large, then TT will block
+    access when doing hot backups.
+
+    This works by shutting down the nodes, starting them up on a different port (initial value+5000),
+    taking a copy of them, stopping them and starting them up again on their real port.
+    This is done to prevent stalls (lightcloud client lib is made to handle
+    a master going down at any time).
     """
+    #Stop and start the test nodes
+    stop(['all'])
+    for node in nodes():
+        node['port'] = node['port'] + 5000
+    start(['all'])
+
     import simplejson
 
     data_dir = '%s/data' % config['DATA_DIR']
@@ -233,6 +254,12 @@ def hot_copy():
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
+    #Done the backup, restore and start again
+    stop(['all'])
+    for node in nodes():
+        node['port'] = node['port'] - 5000
+    start(['all'])
+
     #--- Move data into backup dir ----------------------------------------------
     for root, dirs, files in os.walk(data_dir):
         for file in files:
@@ -245,10 +272,10 @@ def hot_copy():
 
     #--- Pack them into a tar file ----------------------------------------------
     stamp = long(time.time())
-    backup_file = '%s/hot_copy_%s.tar.gz' % (config['DATA_DIR'], stamp)
+    backup_file = '%s/lightcloud_copy_%s.tar.gz' % (config['DATA_DIR'], stamp)
 
-    nodes = '%s/backup_dir/nodes.json' % (config['DATA_DIR'])
-    open(nodes, 'w').write(simplejson.dumps(config['NODES']))
+    nodes_js = '%s/backup_dir/nodes.json' % (config['DATA_DIR'])
+    open(nodes_js, 'w').write(simplejson.dumps(config['NODES']))
 
     cur_dir = os.getcwd()
 
@@ -262,10 +289,12 @@ def hot_copy():
     print 'Created hot copy in %s' % (backup_file)
 
 
-def hot_restore(args):
+def restore(args):
     """Restores `zip_file` in config['DATA_DIR']/restore_dir.
     Matches the slave nodes from the config file.
+
     """
+
     import simplejson
     tar = args[1]
 
@@ -423,10 +452,10 @@ def main(argv):
         delete_data()
     elif 'purge_logs' in args:
         purge_logs()
-    elif 'hot_copy' in args:
-        hot_copy()
-    elif 'hot_restore' in args:
-        hot_restore(args)
+    elif 'backup' in args:
+        backup()
+    elif 'restore' in args:
+        restore(args)
     elif 'remove_logs' in args:
         remove_logs()
 
