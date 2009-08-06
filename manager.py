@@ -41,7 +41,7 @@ def help():
     print '   python manager.py -c config.py delete_data'
     print ''
     print '   python manager.py -c config.py hot_copy'
-    print '   python manager.py -c config.py hot_restore hot_copy_1245046685.zip'
+    print '   python manager.py -c config.py hot_restore hot_copy_1245046685.tar.gz'
     print ''
     print 'View a sample config file in config.sample.py.'
 
@@ -218,7 +218,7 @@ def hot_copy():
     data_dir = '%s/data' % config['DATA_DIR']
     backup_dir = '%s/backup_dir/' % (config['DATA_DIR'])
     if not os.path.exists(backup_dir):
-        os.mkdir(backup_dir)
+        os.popen('mkdir %s' % backup_dir)
 
     keys = config.get('NODES').keys()
     file_dir = os.path.abspath(os.path.dirname(__file__))
@@ -244,13 +244,18 @@ def hot_copy():
 
     #--- Pack them into a tar file ----------------------------------------------
     stamp = long(time.time())
-    backup_file = '%s/hot_copy_%s.zip' % (config['DATA_DIR'], stamp)
+    backup_file = '%s/hot_copy_%s.tar.gz' % (config['DATA_DIR'], stamp)
 
     nodes = '%s/backup_dir/nodes.json' % (config['DATA_DIR'])
     open(nodes, 'w').write(simplejson.dumps(config['NODES']))
 
-    os.popen('rm -f %s' % backup_file)
-    os.popen('zip -jr %s %s' % (backup_file, backup_dir))
+    cur_dir = os.getcwd()
+
+    os.chdir(backup_dir)
+
+    os.popen('tar cvfP %s *' % (backup_file))
+    os.chdir(cur_dir)
+
     os.popen('rm -rf %s' % backup_dir)
 
     print 'Created hot copy in %s' % (backup_file)
@@ -261,14 +266,14 @@ def hot_restore(args):
     Matches the slave nodes from the config file.
     """
     import simplejson
-    zip_zip = args[1]
+    tar = args[1]
 
     #--- Create restore_dir ----------------------------------------------
     restore_dir = '%s/restore_dir' % (config['DATA_DIR'])
     if not os.path.exists(restore_dir):
         os.mkdir(restore_dir)
 
-    os.popen('unzip %s -d %s' % (zip_zip, restore_dir))
+    os.popen('tar xvfP %s -C %s' % (tar, restore_dir))
 
     restore_dir = '%s' % (restore_dir)
 
