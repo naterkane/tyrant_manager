@@ -129,6 +129,7 @@ def start_node(node):
               "%(master_cfg)s "\
               "-pid %(data)s/%(name)s.pid "\
               "-dmn "\
+              "-uas "\
               " %(logging)s "\
               "-ulog %(data)s/logs/%(id)s/ -sid %(id)s "\
               "-rts %(data)s/data/%(id)s.rts "\
