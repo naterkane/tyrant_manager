@@ -294,7 +294,6 @@ def restore(args):
     Matches the slave nodes from the config file.
 
     """
-
     import simplejson
     tar = args[1]
 
