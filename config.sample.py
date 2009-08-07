@@ -1,6 +1,6 @@
 from os import path
 DATA_DIR = path.join(path.realpath(path.curdir), "data")
-TOKYO_SERVER_PARMS = '#bnum=1000000#fpow=13#opts=ld'
+TOKYO_SERVER_PARMS = '#bnum=1000000#fpow=13#opts=ldf'
 
 USE_MASTER = True
 DEBUG = False
