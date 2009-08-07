@@ -36,6 +36,9 @@ def help():
     print '   python manager.py -c config.py lookup1 status'
     print ''
     print 'Misc:'
+    print '   python manager.py -c config.py optimize <bnum> <fpow>'
+    print '   read more in tokyo tyrant doc for bnum and fpow'
+    print ''
     print '   python manager.py -c config.py purge_logs'
     print '   python manager.py -c config.py delete_logs'
     print '   python manager.py -c config.py delete_data'
@@ -216,6 +219,35 @@ def status_node(node):
     else:
         lines.append('master %s NOT REACHABLE' % node.get('master'))
     print_lines(lines)
+
+#--- Optimize ----------------------------------------------
+def optimize(args):
+    if len(args) != 3:
+        print 'Usage is python manager.py optimize <bnum> <fpow>.'
+        print 'Example is python manager.py 1000000 14'
+        sys.exit(-1)
+
+    bnum = long(args[1])
+    fpow = int(args[2])
+
+    if bnum < 1000:
+        print 'bnum should not be smaller than 1000!'
+        sys.exit(-1)
+
+    stop(['all'])
+
+    keys = config.get('NODES').keys()
+
+    #--- Do the backups ----------------------------------------------
+    for name in sorted(keys):
+        node = node_by_name(name)
+        db_file = '%(data)s/data/%(id)s.tch' % node
+        cmd = 'tchmgr optimize -tz %s %s -1 %s' %\
+                (db_file, bnum, fpow)
+        print cmd
+        os.popen(cmd)
+        print 'Done optimization for %s' % (db_file)
+
 
 
 #--- Logs, backups and data ----------------------------------------------
@@ -457,6 +489,8 @@ def main(argv):
         restore(args)
     elif 'remove_logs' in args:
         remove_logs()
+    elif 'optimize' in args:
+        optimize(args)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
