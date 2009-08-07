@@ -146,7 +146,7 @@ def start_node(node):
               "-rts %(data)s/data/%(id)s.rts "\
               "-ulim 128m "\
               "-ext %(cur_pwd)s/extensions/our.lua "\
-              "-thnum 6 -tout 5 "\
+              "-thnum 20 -tout 5 "\
               "%(data)s/data/%(id)s.tch%(opts)s"
 
     if config.get('USE_MASTER', False):
