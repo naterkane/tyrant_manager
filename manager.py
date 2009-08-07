@@ -43,7 +43,8 @@ def help():
     print '   python manager.py -c config.py delete_logs'
     print '   python manager.py -c config.py delete_data'
     print ''
-    print '   python manager.py -c config.py backup'
+    print '   python manager.py -c config.py backup #will shut down your servers'
+    print '   python manager.py -c config.py backup hot_copy #will perform hot copy'
     print '   python manager.py -c config.py restore lightcloud_copy_1245046685.tar.gz'
     print ''
     print 'View a sample config file in config.sample.py.'
@@ -251,21 +252,23 @@ def optimize(args):
 
 
 #--- Logs, backups and data ----------------------------------------------
-def backup():
-    """Takes a copy of the data. Your server will be shut down on backups!
-    The reason for this is that when your database gets large, then TT will block
-    access when doing hot backups.
+def backup(args):
+    """Takes a copy of the data. Your server will be shut down on backups if hot_copy isn't in args!
 
-    This works by shutting down the nodes, starting them up on a different port (initial value+5000),
+    if hot_copy is specified, then your servers won't be shut down
+    be alerted that hot_copy won't work that well on lots of data.
+
+    if hot_copy isn't specified:
+    The backup will be done by shutting down the nodes, starting them up on a different port (initial value+5000),
     taking a copy of them, stopping them and starting them up again on their real port.
-    This is done to prevent stalls (lightcloud client lib is made to handle
-    a master going down at any time).
+    This is done to prevent stalls (lightcloud client lib is made to handle a master going down at any time).
     """
-    #Stop and start the test nodes
-    stop(['all'])
-    for node in nodes():
-        node['port'] = node['port'] + 5000
-    start(['all'])
+    if 'hot_copy' not in args:
+        #Stop and start the test nodes
+        stop(['all'])
+        for node in nodes():
+            node['port'] = node['port'] + 5000
+        start(['all'])
 
     import simplejson
 
@@ -286,11 +289,12 @@ def backup():
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
-    #Done the backup, restore and start again
-    stop(['all'])
-    for node in nodes():
-        node['port'] = node['port'] - 5000
-    start(['all'])
+    if 'hot_copy' not in args:
+        #Done the backup, restore and start again
+        stop(['all'])
+        for node in nodes():
+            node['port'] = node['port'] - 5000
+        start(['all'])
 
     #--- Move data into backup dir ----------------------------------------------
     for root, dirs, files in os.walk(data_dir):
@@ -484,7 +488,7 @@ def main(argv):
     elif 'purge_logs' in args:
         purge_logs()
     elif 'backup' in args:
-        backup()
+        backup(args)
     elif 'restore' in args:
         restore(args)
     elif 'remove_logs' in args:
