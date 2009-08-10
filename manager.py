@@ -143,16 +143,16 @@ def start_node(node):
               "-dmn "\
               "-uas "\
               " %(logging)s "\
-              "-ulog %(data)s/logs/%(id)s/ -sid %(id)s "\
-              "-rts %(data)s/data/%(id)s.rts "\
-              "-ulim 128m "\
               "-ext %(cur_pwd)s/extensions/our.lua "\
               "-thnum 20 -tout 5 "\
               "%(data)s/data/%(id)s.tch%(opts)s"
 
     if config.get('USE_MASTER', False):
         node['master_cfg'] = "-mhost %(m_host)s -mport %(m_port)s "\
-               % node
+                  "-ulog %(data)s/logs/%(id)s/ -sid %(id)s "\
+                  "-rts %(data)s/data/%(id)s.rts "\
+                  "-ulim 128m "\
+                       % node
     else:
         node['master_cfg'] = ''
 
