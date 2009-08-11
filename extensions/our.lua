@@ -41,8 +41,7 @@ function list_add(key, value)
 
         -- We need to reverse the current list, since
         -- the first version of lists did not use putcat
-        -- to append values at the end...
-        -- It added them to the front.
+        -- to append values at the end, it added them to the front.
         if #current > 0 then
             current = _list_reverse(key, current)
         end
@@ -56,7 +55,7 @@ function list_add(key, value)
     --- If the size is too big then clean up in it
     local values = _tokenize(value, LIST_DELIM)
 
-    if list_size > (limit+100) then
+    if list_size > (limit + 100) then
         local new_size = _list_cleanup(key, limit, #values)
         _put(size_key, new_size)
     else
@@ -66,6 +65,7 @@ function list_add(key, value)
 
     --- Append values at the end of the list
     _putcat(key, value)
+
     return "ok"
 end
 
@@ -90,6 +90,7 @@ end
 
 
 
+--
 -- Helpers
 --
 function _tokenize(text, delims) 
@@ -146,6 +147,7 @@ function _list_reverse(key, t)
 	end
 
     _list_store(key, t)
+
     return t
 end
 
