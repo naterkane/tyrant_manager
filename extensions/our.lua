@@ -120,6 +120,7 @@ function _current_list(key, tokens)
    end
 end
 
+
 --- Deletes the first entries in the list
 --- so there's only `limit` entires left in the list
 function _list_cleanup(key, limit, new_items_size)
