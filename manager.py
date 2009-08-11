@@ -163,10 +163,19 @@ def start_node(node):
     print 'Starting node %s on: %s. Master node: %s' %\
             (node['name'], node['full_host'], node['master'])
 
+    status_node(node)
+
+    if config.get('IP_BLOCKING', False):
+        ip_unblock(node['port'])
+
+
 
 def stop_node(node):
     """Stops `node`
     """
+    if config.get('IP_BLOCKING', False):
+        ip_block(node['port'])
+
     pid = get_port_pid(node['port'])
     if pid:
         os.popen('kill %s' % pid)
@@ -294,7 +303,6 @@ def backup(args):
         stop(['all'])
         for node in nodes():
             node['port'] = node['port'] - 5000
-        start(['all'])
 
     #--- Move data into backup dir ----------------------------------------------
     for root, dirs, files in os.walk(data_dir):
@@ -328,7 +336,6 @@ def backup(args):
 def restore(args):
     """Restores `zip_file` in config['DATA_DIR']/restore_dir.
     Matches the slave nodes from the config file.
-
     """
     import simplejson
     tar = args[1]
@@ -422,6 +429,23 @@ def purge_logs():
                     os.remove(os.path.join(root, f))
             else:
                 print "Only %s logs for %s" % (len(files), log_dir)
+
+
+#--- IP tables blocking ----------------------------------------------
+"""There is a certial warm up time for Tokyo Tyrant on large installations.
+Unfortunaley clients accessing a server in warm up period will stall.
+To improve this, the manager can block and unblock ports.
+To do this, simply set `config['IP_BLOCKING'] = True`
+"""
+def ip_block(port):
+    os.popen('sudo iptables -A INPUT -s 0/0 --proto tcp'
+             ' --destination-port %s -j REJECT'
+             ' --reject-with icmp-port-unreachable' % port)
+
+def ip_unblock(port):
+    os.popen('sudo iptables -D INPUT -s 0/0 --proto tcp'
+             ' --destination-port %s -j REJECT'
+             ' --reject-with icmp-port-unreachable' % port)
 
 
 #--- Helpers ----------------------------------------------
