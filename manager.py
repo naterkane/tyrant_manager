@@ -435,8 +435,6 @@ def purge_logs():
     for root, dirs, files in os.walk(log_dir):
         if root != log_dir:
             files.sort()
-            print files
-            continue
             if len(files) > max_log_count:
                 delete_logs = files[:-max_log_count]
                 for f in delete_logs:
