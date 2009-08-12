@@ -103,6 +103,12 @@ def node_by_name(name):
 
     node['data'] = config['DATA_DIR']
 
+    log_dir = config.get('LOG_DIR')
+    if log_dir:
+        node['log_dir'] = '%s/%s/' % (log_dir, node['id'])
+    else:
+        node['log_dir'] = '%s/logs/%s/' % (config['DATA_DIR'], node['id'])
+
     _cache[name] = node
     return node
 
@@ -122,7 +128,8 @@ def get_port_pid(port):
 def start_node(node):
     """Starts `node`
     """
-    log_dir = '%(data)s/logs/%(id)s/' % node
+    log_dir = node['log_dir']
+
     if not os.path.exists(log_dir):
         os.mkdir(log_dir)
 
@@ -149,7 +156,7 @@ def start_node(node):
 
     if config.get('USE_MASTER', False):
         node['master_cfg'] = "-mhost %(m_host)s -mport %(m_port)s "\
-                  "-ulog %(data)s/logs/%(id)s/ -sid %(id)s "\
+                  "-ulog %(log_dir)s -sid %(id)s "\
                   "-rts %(data)s/data/%(id)s.rts "\
                   "-ulim 128m "\
                        % node
@@ -417,8 +424,12 @@ def remove_logs():
 def purge_logs():
     """Purges the logs, but leaves the 2 newest behind.
     """
-    path = config['DATA_DIR']
-    log_dir = '%s/logs' % path
+    log_dir = config.get('LOG_DIR')
+
+    if not log_dir:
+        path = config['DATA_DIR']
+        log_dir = '%s/logs' % path
+
     for root, dirs, files in os.walk(log_dir):
         if root != log_dir:
             files.sort()
@@ -428,7 +439,7 @@ def purge_logs():
                     print os.path.join(root, f)
                     os.remove(os.path.join(root, f))
             else:
-                print "Only %s logs for %s" % (len(files), log_dir)
+                print "Only %s logs for %s" % (len(files), root)
 
 
 #--- IP tables blocking ----------------------------------------------
