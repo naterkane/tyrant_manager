@@ -430,11 +430,15 @@ def purge_logs():
         path = config['DATA_DIR']
         log_dir = '%s/logs' % path
 
+    max_log_count = config.get("MAX_LOG_COUNT", 4)
+
     for root, dirs, files in os.walk(log_dir):
         if root != log_dir:
             files.sort()
-            if len(files) > 4:
-                delete_logs = files[:-4]
+            print files
+            continue
+            if len(files) > max_log_count:
+                delete_logs = files[:-max_log_count]
                 for f in delete_logs:
                     print os.path.join(root, f)
                     os.remove(os.path.join(root, f))
