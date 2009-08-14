@@ -31,59 +31,58 @@ function list_add(key, value)
         key = key_parts[2]
     end
 
-    local size_key = key .. "size"
+    local current_value = _get(key) or ''
 
-    local list_size = _get(size_key)
+    --- Filter out values so we don't insert duplicates 
+    local serach_val = LIST_DELIM .. current_value
+    local values = _tokenize(value, LIST_DELIM)
+    local filtered = {}
 
-    --- If the size is not initialized, then init it
-    if list_size == nil then
-        local current = _current_list(key, nil)
-
-        -- We need to reverse the current list, since
-        -- the first version of lists did not use putcat
-        -- to append values at the end, it added them to the front.
-        if #current > 0 then
-            current = _list_reverse(key, current)
+    for i=1, #values do
+        if not string.match(serach_val, LIST_DELIM .. values[i] .. LIST_DELIM) then
+            table.insert(filtered, values[i])
         end
-
-        list_size = #current
-        _put(size_key, list_size)
-    else
-        list_size = tonumber(list_size)
     end
 
+    --- Check if they are all duplicates
+    if #filtered == 0 then
+        return "ok"
+    end
+
+    values = filtered
+    value = table.concat(values, LIST_DELIM)  .. LIST_DELIM
+
+    --- Check if we should apply cleanup
+    local current_list = _current_list(current_value, nil)
+    local list_size = #current_list
+
     --- If the size is too big then clean up in it
-    local values = _tokenize(value, LIST_DELIM)
+    list_size = list_size + #values
 
     if list_size > (limit + 100) then
-        local new_size = _list_cleanup(key, limit, #values)
-        _put(size_key, new_size)
-    else
-        list_size = list_size + #values
-        _put(size_key, list_size)
+        _list_cleanup(key, current_list, limit, #values)
     end
 
     --- Append values at the end of the list
     _putcat(key, value)
-
     return "ok"
 end
 
 
 function list_remove(key, value)
-    local current = _get(key)
+    local current_list = _get(key)
 
-    if not current then
+    if not current_list then
         return "ok"
     end
 
     local tokens = _tokenize(value, LIST_DELIM)
 
     for i = 1, #tokens do
-        current = string.gsub(current, tokens[i] .. LIST_DELIM, "")
+        current_list = string.gsub(current_list, tokens[i] .. LIST_DELIM, "")
     end
 
-    _put(key, current)
+    _put(key, current_list)
 
     return "ok"
 end
@@ -103,18 +102,16 @@ function _tokenize(text, delims)
     return tokens 
 end 
 
-function _current_list(key, tokens)
-   local old = _get(key)
-
-   if old then
+function _current_list(old_list, tokens)
+   if old_list then
        if tokens then
            for i = 1, #tokens do
-                old = string.gsub(old, "^" .. tokens[i] .. LIST_DELIM, "")
-                old = string.gsub(old, LIST_DELIM .. tokens[i] .. LIST_DELIM, LIST_DELIM)
+                old_list = string.gsub(old_list, "^" .. tokens[i] .. LIST_DELIM, "")
+                old_list = string.gsub(old_list, LIST_DELIM .. tokens[i] .. LIST_DELIM, LIST_DELIM)
            end
        end
 
-       return _tokenize(old, LIST_DELIM)
+       return _tokenize(old_list, LIST_DELIM)
     else
         return {}
    end
@@ -123,36 +120,21 @@ end
 
 --- Deletes the first entries in the list
 --- so there's only `limit` entires left in the list
-function _list_cleanup(key, limit, new_items_size)
-    local current = _current_list(key, nil)
-    local current_size = #current + new_items_size
+function _list_cleanup(key, current_list, limit, new_items_size)
+    local current_size = #current_list + new_items_size
 
     while current_size > limit do
         --remove the first item
-        table.remove(current, 1)
+        table.remove(current_list, 1)
         current_size = current_size - 1
     end
 
-    _list_store(key, current)
+    _list_store(key, current_list)
 
     return current_size
 end
 
-function _list_reverse(key, t)
-	local size = #t
-
-	local j = size
-	for i = 1, size / 2 do
-		t[i], t[j] = t[j], t[i]
-		j = j - 1
-	end
-
-    _list_store(key, t)
-
-    return t
-end
-
 function _list_store(key, list)
-    local result = table.concat(list, LIST_DELIM)
-    _put(key, result .. LIST_DELIM)
+    local result = table.concat(list, LIST_DELIM)  .. LIST_DELIM
+    _put(key, result)
 end
