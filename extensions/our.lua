@@ -34,12 +34,12 @@ function list_add(key, value)
     local current_value = _get(key) or ''
 
     --- Filter out values so we don't insert duplicates 
-    local serach_val = LIST_DELIM .. current_value
+    local search_val = LIST_DELIM .. current_value
     local values = _tokenize(value, LIST_DELIM)
     local filtered = {}
 
     for i=1, #values do
-        if not string.match(serach_val, LIST_DELIM .. values[i] .. LIST_DELIM) then
+        if not string.match(search_val, LIST_DELIM .. values[i] .. LIST_DELIM) then
             table.insert(filtered, values[i])
         end
     end
@@ -50,16 +50,13 @@ function list_add(key, value)
     end
 
     values = filtered
-    value = table.concat(values, LIST_DELIM)  .. LIST_DELIM
 
     --- Check if we should apply cleanup
-    local current_list = _current_list(current_value, nil)
-    local list_size = #current_list
-
-    --- If the size is too big then clean up in it
+    local list_size = char_count(search_val, LIST_DELIM)
     list_size = list_size + #values
 
     if list_size > (limit + 100) then
+        local current_list = _current_list(current_value, nil)
         _list_cleanup(key, current_list, limit, #values)
     end
 
@@ -137,4 +134,19 @@ end
 function _list_store(key, list)
     local result = table.concat(list, LIST_DELIM)  .. LIST_DELIM
     _put(key, result)
+end
+
+function char_count(str, char) 
+    if not str then
+        return 0
+    end
+
+    local count = 0 
+    local byte_char = string.byte(char)
+    for i = 1, #str do
+        if string.byte(str, i) == byte_char then
+            count = count + 1 
+        end 
+    end 
+    return count
 end
