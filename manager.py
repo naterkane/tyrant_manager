@@ -288,18 +288,22 @@ def backup(args):
 
     import simplejson
 
-    data_dir = '%s/data' % config['DATA_DIR']
-    backup_dir = '%s/backup_dir/' % (config['DATA_DIR'])
+    backup_dir = config['BACKUP_DIR']
     if not os.path.exists(backup_dir):
         os.popen('mkdir %s' % backup_dir)
 
+    backup_dir_raw = '%s/raw' % config['BACKUP_DIR']
+    if not os.path.exists(backup_dir_raw):
+        os.popen('mkdir %s' % backup_dir_raw)
+
     keys = config.get('NODES').keys()
     file_dir = os.path.abspath(os.path.dirname(__file__))
-    ttbackup = '%s/ttbackup.sh' % file_dir
+    ttbackup = '%s/ttbackup.py' % file_dir
 
     #--- Do the backups ----------------------------------------------
     for name in sorted(keys):
         node = node_by_name(name)
+        open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw) #hack :-/
         cmd = "tcrmgr copy -port %s %s '@.%s'" %\
                  (node['port'], node['host'], ttbackup)
         os.popen(cmd)
@@ -311,21 +315,11 @@ def backup(args):
         for node in nodes():
             node['port'] = node['port'] - 5000
 
-    #--- Move data into backup dir ----------------------------------------------
-    for root, dirs, files in os.walk(data_dir):
-        for file in files:
-            try:
-                id, ext, log_pos = file.split('.')
-            except ValueError:
-                continue
-            os.popen('mv %s/%s %s' % (data_dir, file, backup_dir))
-            print 'Moved %s to backup directory' % file
-
     #--- Pack them into a tar file ----------------------------------------------
     stamp = long(time.time())
-    backup_file = '%s/lightcloud_copy_%s.tar.gz' % (config['DATA_DIR'], stamp)
+    backup_file = '%s/lightcloud_copy_%s.tar.gz' % (backup_dir, stamp)
 
-    nodes_js = '%s/backup_dir/nodes.json' % (config['DATA_DIR'])
+    nodes_js = '%s/nodes.json' % (config['DATA_DIR'])
     open(nodes_js, 'w').write(simplejson.dumps(config['NODES']))
 
     cur_dir = os.getcwd()
@@ -335,7 +329,7 @@ def backup(args):
     os.popen('tar cvfP %s *' % (backup_file))
     os.chdir(cur_dir)
 
-    os.popen('rm -rf %s' % backup_dir)
+    os.popen('rm -rf %s' % backup_dir_raw)
 
     print 'Created hot copy in %s' % (backup_file)
 
