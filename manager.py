@@ -293,8 +293,8 @@ def backup(args):
         os.popen('mkdir %s' % backup_dir)
 
     backup_dir_raw = '%s/raw' % config['BACKUP_DIR']
-    if not os.path.exists(backup_dir_raw):
-        os.popen('mkdir %s' % backup_dir_raw)
+    os.popen('rm -rf %s' % backup_dir_raw)
+    os.popen('mkdir %s' % backup_dir_raw)
 
     keys = config.get('NODES').keys()
     file_dir = os.path.abspath(os.path.dirname(__file__))
@@ -319,14 +319,16 @@ def backup(args):
     stamp = long(time.time())
     backup_file = '%s/lightcloud_copy_%s.tar.gz' % (backup_dir, stamp)
 
-    nodes_js = '%s/nodes.json' % (config['DATA_DIR'])
+    nodes_js = '%s/nodes.json' % (backup_dir_raw)
     open(nodes_js, 'w').write(simplejson.dumps(config['NODES']))
 
     cur_dir = os.getcwd()
 
-    os.chdir(backup_dir)
+    os.chdir(backup_dir_raw)
 
-    os.popen('tar cvfP %s *' % (backup_file))
+    tar_cmd = 'tar cvfP %s *' % (backup_file)
+    print tar_cmd
+    os.popen(tar_cmd)
     os.chdir(cur_dir)
 
     os.popen('rm -rf %s' % backup_dir_raw)
@@ -342,11 +344,15 @@ def restore(args):
     tar = args[1]
 
     #--- Create restore_dir ----------------------------------------------
-    restore_dir = '%s/restore_dir' % (config['DATA_DIR'])
+    backup_dir = config['BACKUP_DIR']
+    if not os.path.exists(backup_dir):
+        os.popen('mkdir %s' % backup_dir)
+
+    restore_dir = '%s/restore_dir' % (backup_dir)
     if not os.path.exists(restore_dir):
         os.mkdir(restore_dir)
 
-    os.popen('tar xvfP %s -C %s' % (tar, restore_dir))
+    #os.popen('tar xvfP %s -C %s' % (tar, restore_dir))
 
     restore_dir = '%s' % (restore_dir)
 
