@@ -59,36 +59,33 @@ These updates are not that realistic in practice.
 
 ### Useful links
 
-Some useful links to Tyrant related sites:
+Some useful links to LightCloud related sites:
 
 * <a href="http://opensource.plurk.com/trac/">Plurk Open Source Trac</a>
 * <a href="http://news.ycombinator.com/item?id=498581" target="_blank">Hacker news discussion</a>
 
-Also do subscribe to Tyrant's mailing list:
-
-<table style="border:1px solid #ccc; font-size:small; width: 500px;">  <tr>    <td rowspan="3">     <img src="http://groups.google.com/groups/img/groups_medium.gif" height="58" width="150" alt="Google Groups" />    </td>    <td colspan="2" align="center"><b>Subscribe to Tyrant Mailing list</b></td>  </tr>  <form action="http://groups.google.com/group/lightcloud/boxsubscribe" style="display: block !important">  <tr>    <td>Email: <input type="text" name="email" /></td>    <td>      <table style="padding:2px">      <tr>        <td>         <input type="submit" name="sub" value="Subscribe" />        </td>      </tr>      </table>    </td>  </tr>   </form>  <tr><td colspan="2" align="center">   <a href="http://groups.google.com/group/lightcloud">Browse Archives</a>  </td></tr></table>
+Also do subscribe to LightClouds's Google Group: <a href="http://groups.google.com/group/lightcloud">http://groups.google.com/group/lightcloud</a>
 
 ### Lua extension
 
 Like stated above you can script Tyrant nodes via Tokyo Tyrant's Lua extension support. This basically means that you can create your own extensions in a very easy manner (the speed is comparable to C).
 
-Here is how you extend with a <span class="hl">incr</span> command:
+Here is how you extend with a <code>incr</code> command:
 
-<div class="highlight"><pre><span class="k">function</span> <span class="nf">incr</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-   <span class="n">value</span> <span class="o">=</span> <span class="nf">tonumber</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-   <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="k">then</span>
-      <span class="k">return</span> <span class="kc">nil</span>
-   <span class="k">end</span>
-   <span class="kd">local</span> <span class="n">old</span> <span class="o">=</span> <span class="nf">tonumber</span><span class="p">(</span><span class="n">_get</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
-   <span class="k">if</span> <span class="n">old</span> <span class="k">then</span>
-      <span class="n">value</span> <span class="o">=</span> <span class="n">value</span> <span class="o">+</span> <span class="n">old</span>
-   <span class="k">end</span>
-   <span class="k">if</span> <span class="ow">not</span> <span class="n">_put</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">then</span>
-      <span class="k">return</span> <span class="kc">nil</span>
-   <span class="k">end</span>
-   <span class="k">return</span> <span class="n">value</span>
-<span class="k">end</span>
-</pre></div>
+	function incr(key, value)
+	   value = tonumber(value)
+	   if not value then
+	      return nil
+	   end
+	   local old = tonumber(_get(key))
+	   if old then
+	      value = value + old
+	   end
+	   if not _put(key, value) then
+	      return nil
+	   end
+	   return value
+	end
 
 And for something a bit more crazy:
 
