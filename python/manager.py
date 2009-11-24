@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin python
 
 """
 Script used to manage Tokyo Tyrant nodes.
@@ -186,7 +186,8 @@ def stop_node(node):
     pid = get_port_pid(node['port'])
     if pid:
         os.popen('kill %s' % pid)
-
+    
+    print 'kill %s' % pid
     print 'Stopping node %s on: %s. Master node: %s' %\
             (node['name'], node['full_host'], node['master'])
 
@@ -303,9 +304,12 @@ def backup(args):
     #--- Do the backups ----------------------------------------------
     for name in sorted(keys):
         node = node_by_name(name)
-        open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw) #hack :-/
+		# working around this hack
+        #open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw) #hack :-/
+        open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw)
         cmd = "tcrmgr copy -port %s %s '@.%s'" %\
                  (node['port'], node['host'], ttbackup)
+        print ttbackup
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
@@ -317,17 +321,21 @@ def backup(args):
 
     #--- Pack them into a tar file ----------------------------------------------
     stamp = long(time.time())
-    backup_file = '%s/lightcloud_copy_%s.tar.gz' % (backup_dir, stamp)
+    backup_file = '%s/tokyotyrant_copy_%s.tar.gz' % (backup_dir, stamp)
+
+    print '325' + backup_file
+    
 
     nodes_js = '%s/nodes.json' % (backup_dir_raw)
+    print '329' + nodes_js
+    print '330' + simplejson.dumps(config['NODES'])
     open(nodes_js, 'w').write(simplejson.dumps(config['NODES']))
-
     cur_dir = os.getcwd()
 
     os.chdir(backup_dir_raw)
-
+    print '334' + backup_dir_raw
     tar_cmd = 'tar cvfP %s *' % (backup_file)
-    print tar_cmd
+    print '336' + tar_cmd
     os.popen(tar_cmd)
     os.chdir(cur_dir)
 
@@ -535,3 +543,5 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
+
+print sys.argv[1:]
