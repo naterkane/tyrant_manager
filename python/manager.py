@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/usr/bin/env python
 
 """
 Script used to manage Tokyo Tyrant nodes.

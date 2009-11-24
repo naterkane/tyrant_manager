@@ -1,4 +1,4 @@
-#!/usr/bin python
+#!/usr/bin/env python
 import os, sys
 backup_dir = open('/tmp/tt_backup_dir').read()
 srcpath = sys.argv[1]
