@@ -309,7 +309,7 @@ def backup(args):
         open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw)
         cmd = "tcrmgr copy -port %s %s '@.%s'" %\
                  (node['port'], node['host'], ttbackup)
-        print ttbackup
+        #print ttbackup
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
@@ -323,22 +323,29 @@ def backup(args):
     stamp = long(time.time())
     backup_file = '%s/tokyotyrant_copy_%s.tar.gz' % (backup_dir, stamp)
 
-    print '325' + backup_file
+    #print '325 ' + backup_file
     
 
     nodes_js = '%s/nodes.json' % (backup_dir_raw)
-    print '329' + nodes_js
-    print '330' + simplejson.dumps(config['NODES'])
+    #print '329 ' + nodes_js
+    #print '330 ' + simplejson.dumps(config['NODES'])
     open(nodes_js, 'w').write(simplejson.dumps(config['NODES']))
     cur_dir = os.getcwd()
 
     os.chdir(backup_dir_raw)
-    print '334' + backup_dir_raw
+    #print '334 ' + backup_dir_raw
     tar_cmd = 'tar cvfP %s *' % (backup_file)
-    print '336' + tar_cmd
+    print tar_cmd
     os.popen(tar_cmd)
     os.chdir(cur_dir)
-
+    
+    restore_dir = '%s/restore_dir' % (backup_dir)
+    if not os.path.exists(restore_dir):
+        os.mkdir(restore_dir)
+        
+    cp_cmd = 'cp -f %s/nodes.json %s' % (backup_dir_raw, restore_dir)
+    print cp_cmd
+    os.popen(cp_cmd)
     os.popen('rm -rf %s' % backup_dir_raw)
 
     print 'Created hot copy in %s' % (backup_file)
@@ -365,6 +372,7 @@ def restore(args):
     restore_dir = '%s' % (restore_dir)
 
     #--- Match slave id's and restore rts files ---------------------------
+    print restore_dir + '/nodes.json'
     copy_nodes = simplejson.loads( open('%s/nodes.json' % restore_dir).read() )
 
     def get_master_id(master_port):
