@@ -1,6 +1,6 @@
 from os import path
 DATA_DIR = path.join(path.realpath(path.curdir), "data")
-BACKUP_DIR = '/var/ttserver/backup';
+BACKUP_DIR = '/var/ttserver/backup'
 TOKYO_SERVER_PARMS = '#bnum=1000000#fpow=13#opts=ldf'
 
 USE_MASTER = True
