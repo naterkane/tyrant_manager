@@ -211,7 +211,7 @@ def status_node(node):
 
     stats = get_stats(node['host'], node['port'])
     master_stats = get_stats(node.get('m_host'), node.get('m_port'))
-
+    print '%s' % (node)
     print '%s (%s:%s):' % (node['name'], node['host'], node['port'])
 
     def print_lines(lines):
@@ -359,6 +359,8 @@ def restore(args):
     tar = args[1]
 
     #--- Create restore_dir ----------------------------------------------
+    data_dir = config['DATA_DIR']
+
     backup_dir = config['BACKUP_DIR']
     if not os.path.exists(backup_dir):
         os.popen('mkdir %s' % backup_dir)
@@ -367,17 +369,18 @@ def restore(args):
     if not os.path.exists(restore_dir):
         os.mkdir(restore_dir)
 
-    #os.popen('tar xvfP %s -C %s' % (tar, restore_dir))
+    os.popen('tar xvfP %s/%s -C %s' % (backup_dir, tar, restore_dir))
 
-    restore_dir = '%s' % (restore_dir)
+    #restore_dir = '%s' % (restore_dir)
 
     #--- Match slave id's and restore rts files ---------------------------
-    print restore_dir + '/nodes.json'
+    #print restore_dir + '/nodes.json'
     copy_nodes = simplejson.loads( open('%s/nodes.json' % restore_dir).read() )
 
     def get_master_id(master_port):
         for node in copy_nodes.values():
             if int(node['port']) == int(master_port):
+                print node
                 return node
         return None
 
@@ -397,14 +400,16 @@ def restore(args):
             id, log_pos = int(id), long(log_pos)
 
             local_node = master_mapping[id]
-            mv_cmd = 'mv %s/%s %s/%s.tch' % (restore_dir, file, restore_dir, local_node['id'])
+            mv_cmd = 'mv -f %s/%s %s/%s.tch' % (restore_dir, file, data_dir, local_node['id'])
             os.popen(mv_cmd)
-            os.popen('echo %s > %s/%s.rts' % (log_pos, restore_dir, local_node['id']))
+            cp_cmd = 'cp -f %s/%s.tch %s/data/' % (data_dir, local_hode['id'], data_dir)
+            os.popen(cp_cmd)
+            os.popen('echo %s > %s/%s.rts' % (log_pos, data_dir, local_node['id']))
 
         break
 
     print 'Restored hot copy of master in %s' % restore_dir
-    os.popen('rm %s/%s' % (restore_dir, 'nodes.json'))
+    #os.popen('rm %s/%s' % (restore_dir, 'nodes.json'))
 
 
 def delete_data():
