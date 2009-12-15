@@ -304,12 +304,9 @@ def backup(args):
     #--- Do the backups ----------------------------------------------
     for name in sorted(keys):
         node = node_by_name(name)
-		# working around this hack
-        #open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw) #hack :-/
-        open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw)
+        open('/tmp/tt_backup_dir', 'w').write(backup_dir_raw) #hack :-/
         cmd = "tcrmgr copy -port %s %s '@.%s'" %\
                  (node['port'], node['host'], ttbackup)
-        #print ttbackup
         os.popen(cmd)
         print 'Done backup for %s:%s' % (node['host'], node['port'])
 
@@ -556,5 +553,3 @@ def main(argv):
 
 if __name__ == "__main__":
     main(sys.argv[1:])
-
-print sys.argv[1:]
