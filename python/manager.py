@@ -399,7 +399,7 @@ def restore(args):
             local_node = master_mapping[id]
             mv_cmd = 'mv -f %s/%s %s/%s.tch' % (restore_dir, file, data_dir, local_node['id'])
             os.popen(mv_cmd)
-            cp_cmd = 'cp -f %s/%s.tch %s/data/' % (data_dir, local_hode['id'], data_dir)
+            cp_cmd = 'cp -f %s/%s.tch %s/data/' % (data_dir, local_node['id'], data_dir)
             os.popen(cp_cmd)
             os.popen('echo %s > %s/%s.rts' % (log_pos, data_dir, local_node['id']))
 
